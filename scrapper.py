@@ -4,6 +4,7 @@ import json
 
 URL_BULBAPEDIA = "https://bulbapedia.bulbagarden.net"
 URL_POKEDEX = "https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number"
+URL_BULBAPEDIA_ITEMS = "https://bulbapedia.bulbagarden.net/wiki/List_of_items_by_name"
 pokemon_data = {}
 
 def parse_pokemon_entry(href, pokemon_name, pokemon_number):
@@ -65,10 +66,41 @@ def parse_pokedex():
         json.dump(pokemon_data, json_file, indent=4)
         # poke = comp.find("a")
         # print(poke.text)
+def parse_item_table(table, items_json): 
+    for i,entry in enumerate(table.find_all("tr")):
+        if(i == 0):
+            continue
+        columns = entry.find_all("td")
+        if(len(columns) != 4):
+            continue
+        # print(columns)
+        name = columns[1].text
+        description = columns[3].text
+        items_json[name] = description
+
+    #
+def parse_pokemon_item():
+    page = requests.get(URL_BULBAPEDIA_ITEMS)
+    results = BeautifulSoup(page.content, "html.parser")
+    item_table_by_alphabet = results.find_all("table", class_="roundy")
+    items_json = {}
+    with open('items_data.json', 'w') as json_file:
+        for i,table in enumerate(item_table_by_alphabet):
+            # items_json = {}
+            parse_item_table(table, items_json)
+            print(chr(ord('A')+i))
+        json.dump(items_json, json_file, indent=4)
+            # break
+            
+
+
+
+
 
     
 #problems maybe 
 #niodorino is a form of nidoranf
 
 if __name__ == "__main__":
-    parse_pokedex()
+    # parse_pokedex()
+    parse_pokemon_item()
