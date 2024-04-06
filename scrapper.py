@@ -6,6 +6,7 @@ URL_BULBAPEDIA = "https://bulbapedia.bulbagarden.net"
 URL_POKEDEX = "https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number"
 URL_BULBAPEDIA_ITEMS = "https://bulbapedia.bulbagarden.net/wiki/List_of_items_by_name"
 URL_BULBAPEDIA_POKEMON_MOVES = "https://bulbapedia.bulbagarden.net/wiki/List_of_moves" 
+URL_BULBAPEDIA_POKEMON_ABILITIES = "https://bulbapedia.bulbagarden.net/wiki/Ability"
 pokemon_data = {}
 
 def parse_pokemon_entry(href, pokemon_name, pokemon_number):
@@ -146,6 +147,32 @@ def pares_pokemon_moves():
     with open('moves_data.json', 'w') as json_file:
         json.dump(moves_json, json_file, indent=4)
 
+
+def parse_pokemon_abilities():
+    page = requests.get(URL_BULBAPEDIA_POKEMON_ABILITIES)
+    results = BeautifulSoup(page.content, "html.parser")
+    abilities_header = results.find("span", id="List_of_Abilities")
+    abilities_table = abilities_header.parent.next_sibling.next_sibling.find("table")
+    # print(abilities_table)
+    abilities_json = {}
+    for i,entry in enumerate(abilities_table.find_all("tr")):
+        if(i == 0):
+            continue
+        columns = entry.find_all("td")
+        # number = columns[0].text
+        name = columns[1].text
+        description = columns[2].text
+        abilities_json[name.strip()] = description.strip()
+    
+    with open('abilities_data.json', 'w') as json_file:
+        json.dump(abilities_json, json_file, indent=4)
+        # print(name, description)
+        # break;
+        # abilities_json[name] = description
+
+
+
+
             
 
 
@@ -159,4 +186,5 @@ def pares_pokemon_moves():
 if __name__ == "__main__":
     # parse_pokedex()
     # parse_pokemon_item()
-    pares_pokemon_moves()
+    # pares_pokemon_moves()
+    parse_pokemon_abilities()
