@@ -5,6 +5,7 @@ import json
 URL_BULBAPEDIA = "https://bulbapedia.bulbagarden.net"
 URL_POKEDEX = "https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number"
 URL_BULBAPEDIA_ITEMS = "https://bulbapedia.bulbagarden.net/wiki/List_of_items_by_name"
+URL_BULBAPEDIA_POKEMON_MOVES = "https://bulbapedia.bulbagarden.net/wiki/List_of_moves" 
 pokemon_data = {}
 
 def parse_pokemon_entry(href, pokemon_name, pokemon_number):
@@ -90,7 +91,61 @@ def parse_pokemon_item():
             parse_item_table(table, items_json)
             print(chr(ord('A')+i))
         json.dump(items_json, json_file, indent=4)
-            # break
+
+def parse_pokemon_move(link): 
+    page = requests.get(link)
+    results = BeautifulSoup(page.content, "html.parser")
+    move_description = results.find("span", id="Description")
+    parent = move_description.parent
+    description_table = parent.next_sibling.next_sibling.find("table")
+    # # print(description_table)
+    # print(parent)
+    move_description = [] 
+    for i,entry in enumerate(description_table.find_all("tr")):
+        if(i == 0):
+            continue
+        columns = entry.find_all("td")
+        move_description.append(columns[1].text)
+    return move_description
+
+def pares_pokemon_moves():
+    page = requests.get(URL_BULBAPEDIA_POKEMON_MOVES)
+    # print(page.content)
+    moves_json = {}
+    results = BeautifulSoup(page.content, "html.parser")
+    moves_table = results.find("table", class_="sortable roundy")
+    # print(str(moves_table)[:200])
+    moves_table_body = moves_table.find("table", class_="sortable roundy").find("tbody")
+
+    # print(len(moves_table_body))
+    # print(str(moves_table_body[0])[:1000])
+    # print(str(moves_table_body[0])[:1000])
+    # print(moves_table_body)
+    failed = {}
+    for i,entry in enumerate(moves_table_body.find_all("tr")):
+        if(i == 0):
+            continue
+        try:
+            # print(entry)
+            columns = entry.find_all("td")
+            # print(columns)
+            number = columns[0].text
+            name = columns[1].find("a").text
+            link = columns[1].find("a").get("href")
+            # print(name, link)
+            descriptions = parse_pokemon_move(URL_BULBAPEDIA + link)
+            condensed_name = name.replace(" ", "").lower()
+            print(condensed_name)
+            moves_json[condensed_name] = {"name": name, "number": number, "descriptions": descriptions}
+        except: 
+            failed[name] = link
+            print("failed",name)
+    with open('failed_moves.json', 'w') as json_file:
+        json.dump(failed, json_file, indent=4)
+        # break
+    with open('moves_data.json', 'w') as json_file:
+        json.dump(moves_json, json_file, indent=4)
+
             
 
 
@@ -103,4 +158,5 @@ def parse_pokemon_item():
 
 if __name__ == "__main__":
     # parse_pokedex()
-    parse_pokemon_item()
+    # parse_pokemon_item()
+    pares_pokemon_moves()
